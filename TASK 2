@@ -1,0 +1,57 @@
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import org.json.JSONObject;
+
+public class FetchingWeatherData {
+    private static final String API_KEY = "YOUR_API_KEY"; // Replace with your OpenWeatherMap API key
+    private static final String LOCATION = "London,UK"; // Change to your desired location
+    private static final String API_URL = "https://api.openweathermap.org/data/2.5/weather?q=" + LOCATION + "&appid=" + API_KEY + "&units=metric";
+
+    public static void main(String[] args) {
+        try {
+            fetchWeatherData();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void fetchWeatherData() throws Exception {
+        URL url = new URL(API_URL);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("GET");
+
+        // Check if the response code is 200 (HTTP_OK)
+        if (conn.getResponseCode() == 200) {
+            BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            String inputLine;
+            StringBuilder response = new StringBuilder();
+
+            while ((inputLine = in.readLine()) != null) {
+                response.append(inputLine);
+            }
+            in.close();
+
+            // Parse JSON response
+            parseWeatherData(response.toString());
+        } else {
+            System.out.println("Error: Unable to fetch weather data.");
+        }
+    }
+
+    private static void parseWeatherData(String jsonData) {
+        JSONObject jsonObject = new JSONObject(jsonData);
+        String cityName = jsonObject.getString("name");
+        JSONObject main = jsonObject.getJSONObject("main");
+        double temperature = main.getDouble("temp");
+        double humidity = main.getDouble("humidity");
+        String weatherDescription = jsonObject.getJSONArray("weather").getJSONObject(0).getString("description");
+
+        // Display the weather data
+        System.out.printf("Weather in %s:\n", cityName);
+        System.out.printf("Temperature: %.2f °C\n", temperature);
+        System.out.printf("Humidity: %.2f%%\n", humidity);
+        System.out.printf("Description: %s\n", weatherDescription);
+    }
+}
